@@ -67,12 +67,9 @@ def fetch_hoyolab(limit=10):
         print('HoYoLAB status: ' + str(resp.status_code))
         data = resp.json()
         print('HoYoLAB retcode: ' + str(data.get('retcode')))
-        print('HoYoLAB data keys: ' + str(list((data.get('data') or {}).keys())))
-        raw_list = (data.get('data') or {}).get('list') or []
+        raw_list = (data.get('data') or {}).get('posts') or []
         print('HoYoLAB list length: ' + str(len(raw_list)))
-        if raw_list:
-            print('HoYoLAB first item keys: ' + str(list(raw_list[0].keys())))
-        for item in (data.get('data') or {}).get('list') or []:
+        for item in raw_list:
             post = item.get('post', {})
             stat = item.get('stat', {})
             image_list = item.get('image_list') or []
