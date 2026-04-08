@@ -1,35 +1,89 @@
-import os, json, datetime, requests
+import os, json, datetime, requests, xml.etree.ElementTree as ET
 from pathlib import Path
 
 
 def fetch_reddit(limit=20):
     subreddits = ['Genshin_Impact', 'GenshinImpactTips', 'Genshin_Lore']
-    headers = {'User-Agent': 'genshin-global-digest/1.0'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/rss+xml, application/xml, text/xml',
+    }
     posts = []
+    ns = 'http://www.w3.org/2005/Atom'
+    media_ns = 'http://search.yahoo.com/mrss/'
     for sub in subreddits:
         try:
             resp = requests.get(
-                'https://www.reddit.com/r/' + sub + '/hot.json?limit=' + str(limit),
-                headers=headers, timeout=10)
-            data = resp.json()
-            for item in data['data']['children']:
-                p = item['data']
-                if p.get('stickied'):
+                'https://www.reddit.com/r/' + sub + '/hot.rss?limit=' + str(limit),
+                headers=headers, timeout=15)
+            if resp.status_code != 200:
+                print('Reddit ' + sub + ' status: ' + str(resp.status_code))
+                continue
+            root = ET.fromstring(resp.content)
+            entries = root.findall('{' + ns + '}entry')
+            for entry in entries:
+                title_el = entry.find('{' + ns + '}title')
+                link_el = entry.find('{' + ns + '}link')
+                if title_el is None or link_el is None:
                     continue
-                thumb = p.get('thumbnail', '')
+                title = title_el.text or ''
+                url = link_el.get('href', '')
+                # try to get thumbnail from media:thumbnail
+                thumb = None
+                thumb_el = entry.find('{' + media_ns + '}thumbnail')
+                if thumb_el is not None:
+                    thumb = thumb_el.get('url')
                 posts.append({
-                    'title': p['title'],
-                    'url': 'https://reddit.com' + p['permalink'],
-                    'score': p['score'],
-                    'comments': p['num_comments'],
+                    'title': title,
+                    'url': url,
+                    'score': 0,
+                    'comments': 0,
                     'source': 'r/' + sub,
                     'platform': 'Reddit',
-                    'thumb': thumb if thumb.startswith('http') else None,
+                    'thumb': thumb,
                 })
         except Exception as e:
-            print('Reddit error: ' + str(e))
-    posts.sort(key=lambda x: x['score'], reverse=True)
+            print('Reddit error (' + sub + '): ' + str(e))
     return posts[:20]
+
+
+def fetch_hoyolab(limit=10):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120',
+        'Accept': 'application/json',
+        'x-rpc-client_type': '4',
+        'x-rpc-app_version': '1.5.0',
+        'x-rpc-language': 'en-us',
+        'Origin': 'https://www.hoyolab.com',
+        'Referer': 'https://www.hoyolab.com/',
+    }
+    posts = []
+    try:
+        resp = requests.get(
+            'https://bbs-api-os.hoyolab.com/community/post/wapi/getForumPostList',
+            params={'forum_id': 29, 'is_good': 'false', 'is_hot': 'true',
+                    'page_size': limit, 'gids': 2},
+            headers=headers, timeout=15)
+        print('HoYoLAB status: ' + str(resp.status_code))
+        data = resp.json()
+        print('HoYoLAB retcode: ' + str(data.get('retcode')))
+        for item in (data.get('data') or {}).get('list') or []:
+            post = item.get('post', {})
+            stat = item.get('stat', {})
+            image_list = item.get('image_list') or []
+            cover = image_list[0].get('url') if image_list else None
+            posts.append({
+                'title': post.get('subject', '(no title)'),
+                'url': 'https://www.hoyolab.com/article/' + str(post.get('post_id')),
+                'score': stat.get('like_num', 0),
+                'comments': stat.get('reply_num', 0),
+                'source': 'HoYoLAB',
+                'platform': 'HoYoLAB',
+                'thumb': cover,
+            })
+    except Exception as e:
+        print('HoYoLAB error: ' + str(e))
+    return posts
 
 
 def fetch_vk(limit=15):
@@ -72,42 +126,6 @@ def fetch_vk(limit=15):
     return posts[:10]
 
 
-def fetch_hoyolab(limit=10):
-    headers = {
-        'User-Agent': 'Mozilla/5.0',
-        'x-rpc-client_type': '4',
-        'x-rpc-app_version': '1.5.0',
-        'x-rpc-language': 'en-us',
-        'Origin': 'https://www.hoyolab.com',
-        'Referer': 'https://www.hoyolab.com/',
-    }
-    posts = []
-    try:
-        resp = requests.get(
-            'https://bbs-api-os.hoyolab.com/community/post/wapi/getForumPostList',
-            params={'forum_id': 29, 'is_good': 'false', 'is_hot': 'true',
-                    'page_size': limit, 'gids': 2},
-            headers=headers, timeout=10)
-        data = resp.json()
-        for item in (data.get('data') or {}).get('list') or []:
-            post = item.get('post', {})
-            stat = item.get('stat', {})
-            image_list = item.get('image_list') or []
-            cover = image_list[0].get('url') if image_list else None
-            posts.append({
-                'title': post.get('subject', '(no title)'),
-                'url': 'https://www.hoyolab.com/article/' + str(post.get('post_id')),
-                'score': stat.get('like_num', 0),
-                'comments': stat.get('reply_num', 0),
-                'source': 'HoYoLAB',
-                'platform': 'HoYoLAB',
-                'thumb': cover,
-            })
-    except Exception as e:
-        print('HoYoLAB error: ' + str(e))
-    return posts
-
-
 COLORS = {'Reddit': '#FF4500', 'VK': '#0077FF', 'HoYoLAB': '#1A9DD9'}
 
 
@@ -115,13 +133,15 @@ def card(p):
     c = COLORS.get(p['platform'], '#888')
     img = '<img src="' + p['thumb'] + '" alt="" loading="lazy">' if p.get('thumb') else ''
     title = p['title'].replace('<', '&lt;').replace('>', '&gt;')
+    score_str = str(p['score']) if p['score'] else '-'
+    comments_str = str(p['comments']) if p['comments'] else '-'
     return (
         '<a class="card" href="' + p['url'] + '" target="_blank">' +
         img + '<div class="card-body">' +
         '<span class="badge" style="background:' + c + '">' + p['platform'] + ' &middot; ' + p['source'] + '</span>' +
         '<p class="card-title">' + title + '</p>' +
-        '<div class="card-meta"><span>👍 ' + str(p['score']) + '</span>' +
-        '<span>💬 ' + str(p['comments']) + '</span></div>' +
+        '<div class="card-meta"><span>👍 ' + score_str + '</span>' +
+        '<span>💬 ' + comments_str + '</span></div>' +
         '</div></a>'
     )
 
