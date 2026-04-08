@@ -73,15 +73,6 @@
       "thumb": null
     },
     {
-      "title": "My Furina cosplay!",
-      "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sff0uw/my_furina_cosplay/",
-      "score": 0,
-      "comments": 0,
-      "source": "r/Genshin_Impact",
-      "platform": "Reddit",
-      "thumb": "https://preview.redd.it/e4p5mtrwcvtg1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=5b594f90d3523b8ebd3657ef4286f56f29fd82c0"
-    },
-    {
       "title": "Is this a joke?",
       "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sfo0cl/is_this_a_joke/",
       "score": 0,
@@ -89,6 +80,15 @@
       "source": "r/Genshin_Impact",
       "platform": "Reddit",
       "thumb": "https://preview.redd.it/sroo9lamrxtg1.jpeg?width=640&crop=smart&auto=webp&s=beed9c1f30b1dd7b77a301cfbeb3731ccc78a4f3"
+    },
+    {
+      "title": "My Furina cosplay!",
+      "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sff0uw/my_furina_cosplay/",
+      "score": 0,
+      "comments": 0,
+      "source": "r/Genshin_Impact",
+      "platform": "Reddit",
+      "thumb": "https://preview.redd.it/e4p5mtrwcvtg1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=5b594f90d3523b8ebd3657ef4286f56f29fd82c0"
     },
     {
       "title": "Oh no. She's a meganekko.",
@@ -183,5 +183,5 @@
   ],
   "vk": [],
   "hoyolab": [],
-  "generated_at": "2026-04-08T10:32:18.134604"
+  "generated_at": "2026-04-08T10:36:44.636551"
 }
