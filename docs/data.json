@@ -82,15 +82,6 @@
       "thumb": "https://preview.redd.it/e4p5mtrwcvtg1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=5b594f90d3523b8ebd3657ef4286f56f29fd82c0"
     },
     {
-      "title": "Oh no. She's a meganekko.",
-      "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sfjnjc/oh_no_shes_a_meganekko/",
-      "score": 0,
-      "comments": 0,
-      "source": "r/Genshin_Impact",
-      "platform": "Reddit",
-      "thumb": "https://preview.redd.it/ekrt77hygwtg1.png?width=640&crop=smart&auto=webp&s=241a10d06bed3169d754646010234867edb8a484"
-    },
-    {
       "title": "Is this a joke?",
       "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sfo0cl/is_this_a_joke/",
       "score": 0,
@@ -98,6 +89,15 @@
       "source": "r/Genshin_Impact",
       "platform": "Reddit",
       "thumb": "https://preview.redd.it/sroo9lamrxtg1.jpeg?width=640&crop=smart&auto=webp&s=beed9c1f30b1dd7b77a301cfbeb3731ccc78a4f3"
+    },
+    {
+      "title": "Oh no. She's a meganekko.",
+      "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sfjnjc/oh_no_shes_a_meganekko/",
+      "score": 0,
+      "comments": 0,
+      "source": "r/Genshin_Impact",
+      "platform": "Reddit",
+      "thumb": "https://preview.redd.it/ekrt77hygwtg1.png?width=640&crop=smart&auto=webp&s=241a10d06bed3169d754646010234867edb8a484"
     },
     {
       "title": "I hate new update for this",
@@ -154,6 +154,15 @@
       "thumb": "https://preview.redd.it/nmvfx5rutwtg1.png?width=640&crop=smart&auto=webp&s=440caaa7af49d7a313f2e2e20ea32b757b9d9926"
     },
     {
+      "title": "Oh My Dear Slime Balloons How I Have Missed You",
+      "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sfhaw8/oh_my_dear_slime_balloons_how_i_have_missed_you/",
+      "score": 0,
+      "comments": 0,
+      "source": "r/Genshin_Impact",
+      "platform": "Reddit",
+      "thumb": "https://preview.redd.it/ibuhon3jvvtg1.jpeg?width=640&crop=smart&auto=webp&s=0cb297d55b88fbc5e6895208d402fdea5e9db373"
+    },
+    {
       "title": "Luna VI Optimizations",
       "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sfcfke/luna_vi_optimizations/",
       "score": 0,
@@ -170,18 +179,9 @@
       "source": "r/Genshin_Impact",
       "platform": "Reddit",
       "thumb": "https://preview.redd.it/ycj19tofivtg1.jpg?width=140&height=140&auto=webp&s=b9b26fd392e3e1465c47e6bd126eb0886297f22e"
-    },
-    {
-      "title": "Oh My Dear Slime Balloons How I Have Missed You",
-      "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sfhaw8/oh_my_dear_slime_balloons_how_i_have_missed_you/",
-      "score": 0,
-      "comments": 0,
-      "source": "r/Genshin_Impact",
-      "platform": "Reddit",
-      "thumb": "https://preview.redd.it/ibuhon3jvvtg1.jpeg?width=640&crop=smart&auto=webp&s=0cb297d55b88fbc5e6895208d402fdea5e9db373"
     }
   ],
   "vk": [],
   "hoyolab": [],
-  "generated_at": "2026-04-08T10:23:16.608518"
+  "generated_at": "2026-04-08T10:32:18.134604"
 }
