@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 def fetch_reddit(limit=20):
+    # Fetch hot posts from multiple subreddits, return top `limit` by combining
     subreddits = ['Genshin_Impact', 'GenshinImpactTips', 'Genshin_Lore']
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -11,10 +12,11 @@ def fetch_reddit(limit=20):
     posts = []
     ns = 'http://www.w3.org/2005/Atom'
     media_ns = 'http://search.yahoo.com/mrss/'
+    per_sub = max(limit, 25)
     for sub in subreddits:
         try:
             resp = requests.get(
-                'https://www.reddit.com/r/' + sub + '/hot.rss?limit=' + str(limit),
+                'https://www.reddit.com/r/' + sub + '/hot.rss?limit=' + str(per_sub),
                 headers=headers, timeout=15)
             if resp.status_code != 200:
                 print('Reddit ' + sub + ' status: ' + str(resp.status_code))
@@ -43,10 +45,17 @@ def fetch_reddit(limit=20):
                 })
         except Exception as e:
             print('Reddit error (' + sub + '): ' + str(e))
-    return posts[:20]
+    # RSS returns posts in hot order already; deduplicate by url and take top limit
+    seen = set()
+    deduped = []
+    for p in posts:
+        if p['url'] not in seen:
+            seen.add(p['url'])
+            deduped.append(p)
+    return deduped[:limit]
 
 
-def fetch_hoyolab(limit=10):
+def fetch_hoyolab(limit=20):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120',
         'Accept': 'application/json',
@@ -57,50 +66,67 @@ def fetch_hoyolab(limit=10):
         'Referer': 'https://www.hoyolab.com/',
     }
     posts = []
-    try:
-        resp = requests.get(
-            'https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList',
-            params={'gids': 2, 'last_id': '', 'page_size': limit, 'type': 3},
-            headers=headers, timeout=15)
-        print('HoYoLAB status: ' + str(resp.status_code))
-        data = resp.json()
-        print('HoYoLAB retcode: ' + str(data.get('retcode')))
-        raw_list = (data.get('data') or {}).get('list') or []
-        print('HoYoLAB list length: ' + str(len(raw_list)))
-        for item in raw_list:
-            post = item.get('post', {})
-            stat = item.get('stat', {})
-            image_list = item.get('image_list') or []
-            cover = image_list[0].get('url') if image_list else None
-            if not cover and post.get('cover'):
-                cover = post.get('cover')
-            posts.append({
-                'title': post.get('subject', '(no title)'),
-                'url': 'https://www.hoyolab.com/article/' + str(post.get('post_id')),
-                'score': stat.get('like_num', 0),
-                'comments': stat.get('reply_num', 0),
-                'source': 'HoYoLAB',
-                'platform': 'HoYoLAB',
-                'thumb': cover,
-            })
-    except Exception as e:
-        print('HoYoLAB error: ' + str(e))
-    return posts
+    last_id = ''
+    fetched = 0
+    page_size = min(limit, 20)
+    while fetched < limit:
+        try:
+            resp = requests.get(
+                'https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList',
+                params={'gids': 2, 'last_id': last_id, 'page_size': page_size, 'type': 3},
+                headers=headers, timeout=15)
+            data = resp.json()
+            if data.get('retcode') != 0:
+                break
+            raw_list = (data.get('data') or {}).get('list') or []
+            if not raw_list:
+                break
+            for item in raw_list:
+                post = item.get('post', {})
+                stat = item.get('stat', {})
+                image_list = item.get('image_list') or []
+                cover = image_list[0].get('url') if image_list else None
+                if not cover and post.get('cover'):
+                    cover = post.get('cover')
+                posts.append({
+                    'title': post.get('subject', '(no title)'),
+                    'url': 'https://www.hoyolab.com/article/' + str(post.get('post_id')),
+                    'score': stat.get('like_num', 0),
+                    'comments': stat.get('reply_num', 0),
+                    'source': 'HoYoLAB',
+                    'platform': 'HoYoLAB',
+                    'thumb': cover,
+                })
+            fetched += len(raw_list)
+            is_last = (data.get('data') or {}).get('is_last', True)
+            if is_last or fetched >= limit:
+                break
+            last_id = (data.get('data') or {}).get('last_id', '')
+        except Exception as e:
+            print('HoYoLAB error: ' + str(e))
+            break
+    # Sort by likes descending to ensure hottest first
+    posts.sort(key=lambda x: x['score'], reverse=True)
+    print('HoYoLAB list length: ' + str(len(posts[:limit])))
+    return posts[:limit]
 
 
-def fetch_youtube(limit=10):
+def fetch_youtube(limit=20):
     posts = []
     try:
+        # Fetch more than needed, then sort by view count to get hottest
+        fetch_count = limit * 3
         result = subprocess.run(
             [
                 sys.executable, '-m', 'yt_dlp',
                 '--dump-json', '--flat-playlist', '--no-download',
-                '--playlist-end', str(limit),
-                '--default-search', 'ytsearch' + str(limit),
+                '--playlist-end', str(fetch_count),
+                '--default-search', 'ytsearch' + str(fetch_count),
                 'genshin impact',
             ],
-            capture_output=True, text=True, timeout=60
+            capture_output=True, text=True, timeout=120
         )
+        items = []
         for line in result.stdout.strip().split('\n'):
             if not line:
                 continue
@@ -113,7 +139,7 @@ def fetch_youtube(limit=10):
                 elif item.get('thumbnail'):
                     thumb = item.get('thumbnail')
                 view_count = item.get('view_count') or 0
-                posts.append({
+                items.append({
                     'title': item.get('title', '(no title)'),
                     'url': 'https://www.youtube.com/watch?v=' + item.get('id', ''),
                     'score': view_count,
@@ -124,6 +150,9 @@ def fetch_youtube(limit=10):
                 })
             except Exception:
                 continue
+        # Sort by view count descending
+        items.sort(key=lambda x: x['score'], reverse=True)
+        posts = items[:limit]
         print('YouTube list length: ' + str(len(posts)))
     except Exception as e:
         print('YouTube error: ' + str(e))
@@ -211,15 +240,15 @@ def generate_html(reddit, hoyolab, youtube):
 
 def main():
     print('Fetching Reddit...')
-    reddit = fetch_reddit()
+    reddit = fetch_reddit(20)
     print('  ' + str(len(reddit)) + ' posts')
 
     print('Fetching HoYoLAB...')
-    hoyolab = fetch_hoyolab()
+    hoyolab = fetch_hoyolab(20)
     print('  ' + str(len(hoyolab)) + ' posts')
 
     print('Fetching YouTube...')
-    youtube = fetch_youtube()
+    youtube = fetch_youtube(20)
     print('  ' + str(len(youtube)) + ' videos')
 
     html = generate_html(reddit, hoyolab, youtube)
