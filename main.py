@@ -133,15 +133,16 @@ def fetch_bilibili(limit=20):
         'Referer': 'https://www.bilibili.com',
         'Cookie': 'buvid3=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee12345infoc',
     }
-    posts = []
     two_weeks_ago = int(time.time()) - 14 * 24 * 3600
+    genshin_keywords = ('原神', 'genshin', 'Genshin')
+    all_results = []
     try:
-        all_results = []
+        # Fetch top videos by play count across multiple pages, filter to recent + genshin only
         for page in range(1, 5):
             resp = requests.get(
                 'https://api.bilibili.com/x/web-interface/search/type',
                 params={'search_type': 'video', 'keyword': '原神',
-                        'order': 'pubdate', 'page': page, 'page_size': 50},
+                        'order': 'click', 'page': page, 'page_size': 50},
                 headers=headers, timeout=15)
             data = resp.json()
             if data.get('code') != 0:
@@ -149,13 +150,19 @@ def fetch_bilibili(limit=20):
             results = (data.get('data') or {}).get('result') or []
             if not results:
                 break
-            recent = [r for r in results if r.get('pubdate', 0) >= two_weeks_ago]
-            all_results.extend(recent)
-            if len(recent) < len(results):
-                break
-        print('Bilibili recent pool: ' + str(len(all_results)))
+            all_results.extend(results)
+        print('Bilibili total pool: ' + str(len(all_results)))
+
+        posts = []
         for item in all_results:
-            title = re.sub(r'<[^>]+>', '', item.get('title', '(no title)'))
+            raw_title = item.get('title', '')
+            title = re.sub(r'<[^>]+>', '', raw_title)
+            # Strict filter: must contain genshin keywords
+            if not any(kw.lower() in title.lower() for kw in genshin_keywords):
+                continue
+            # Must be published within last 2 weeks
+            if item.get('pubdate', 0) < two_weeks_ago:
+                continue
             bvid = item.get('bvid', '')
             aid = item.get('aid', '')
             url = ('https://www.bilibili.com/video/' + bvid) if bvid else ('https://www.bilibili.com/video/av' + str(aid))
@@ -173,6 +180,7 @@ def fetch_bilibili(limit=20):
             })
     except Exception as e:
         print('Bilibili error: ' + str(e))
+
     posts.sort(key=lambda x: x['score'], reverse=True)
     seen, deduped = set(), []
     for p in posts:
