@@ -134,10 +134,13 @@ def fetch_bilibili(limit=20):
     }
     posts = []
     try:
+        import time
+        two_weeks_ago = int(time.time()) - 14 * 24 * 3600
         resp = requests.get(
             'https://api.bilibili.com/x/web-interface/search/type',
             params={'search_type': 'video', 'keyword': '原神', 'order': 'click',
-                    'page': 1, 'page_size': limit},
+                    'page': 1, 'page_size': limit,
+                    'pubtime_begin_s': two_weeks_ago},
             headers=headers, timeout=15)
         data = resp.json()
         print('Bilibili code: ' + str(data.get('code')))
