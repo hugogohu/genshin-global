@@ -1,9 +1,8 @@
-import os, json, datetime, requests, xml.etree.ElementTree as ET, subprocess, sys
+import os, json, datetime, requests, xml.etree.ElementTree as ET, subprocess, sys, re
 from pathlib import Path
 
 
 def fetch_reddit(limit=20):
-    # Fetch hot posts from multiple subreddits, return top `limit` by combining
     subreddits = ['Genshin_Impact', 'GenshinImpactTips', 'Genshin_Lore']
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -19,7 +18,6 @@ def fetch_reddit(limit=20):
                 'https://www.reddit.com/r/' + sub + '/hot.rss?limit=' + str(per_sub),
                 headers=headers, timeout=15)
             if resp.status_code != 200:
-                print('Reddit ' + sub + ' status: ' + str(resp.status_code))
                 continue
             root = ET.fromstring(resp.content)
             entries = root.findall('{' + ns + '}entry')
@@ -28,26 +26,19 @@ def fetch_reddit(limit=20):
                 link_el = entry.find('{' + ns + '}link')
                 if title_el is None or link_el is None:
                     continue
-                title = title_el.text or ''
-                url = link_el.get('href', '')
                 thumb = None
                 thumb_el = entry.find('{' + media_ns + '}thumbnail')
                 if thumb_el is not None:
                     thumb = thumb_el.get('url')
                 posts.append({
-                    'title': title,
-                    'url': url,
-                    'score': 0,
-                    'comments': 0,
-                    'source': 'r/' + sub,
-                    'platform': 'Reddit',
-                    'thumb': thumb,
+                    'title': title_el.text or '',
+                    'url': link_el.get('href', ''),
+                    'score': 0, 'comments': 0,
+                    'source': 'r/' + sub, 'platform': 'Reddit', 'thumb': thumb,
                 })
         except Exception as e:
             print('Reddit error (' + sub + '): ' + str(e))
-    # RSS returns posts in hot order already; deduplicate by url and take top limit
-    seen = set()
-    deduped = []
+    seen, deduped = set(), []
     for p in posts:
         if p['url'] not in seen:
             seen.add(p['url'])
@@ -59,21 +50,17 @@ def fetch_hoyolab(limit=20):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120',
         'Accept': 'application/json',
-        'x-rpc-client_type': '4',
-        'x-rpc-app_version': '1.5.0',
+        'x-rpc-client_type': '4', 'x-rpc-app_version': '1.5.0',
         'x-rpc-language': 'en-us',
-        'Origin': 'https://www.hoyolab.com',
-        'Referer': 'https://www.hoyolab.com/',
+        'Origin': 'https://www.hoyolab.com', 'Referer': 'https://www.hoyolab.com/',
     }
     posts = []
     last_id = ''
-    fetched = 0
-    page_size = min(limit, 20)
-    while fetched < limit:
+    while len(posts) < limit:
         try:
             resp = requests.get(
                 'https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList',
-                params={'gids': 2, 'last_id': last_id, 'page_size': page_size, 'type': 3},
+                params={'gids': 2, 'last_id': last_id, 'page_size': min(limit, 20), 'type': 3},
                 headers=headers, timeout=15)
             data = resp.json()
             if data.get('retcode') != 0:
@@ -85,27 +72,19 @@ def fetch_hoyolab(limit=20):
                 post = item.get('post', {})
                 stat = item.get('stat', {})
                 image_list = item.get('image_list') or []
-                cover = image_list[0].get('url') if image_list else None
-                if not cover and post.get('cover'):
-                    cover = post.get('cover')
+                cover = image_list[0].get('url') if image_list else (post.get('cover') or None)
                 posts.append({
                     'title': post.get('subject', '(no title)'),
                     'url': 'https://www.hoyolab.com/article/' + str(post.get('post_id')),
-                    'score': stat.get('like_num', 0),
-                    'comments': stat.get('reply_num', 0),
-                    'source': 'HoYoLAB',
-                    'platform': 'HoYoLAB',
-                    'thumb': cover,
+                    'score': stat.get('like_num', 0), 'comments': stat.get('reply_num', 0),
+                    'source': 'HoYoLAB', 'platform': 'HoYoLAB', 'thumb': cover,
                 })
-            fetched += len(raw_list)
-            is_last = (data.get('data') or {}).get('is_last', True)
-            if is_last or fetched >= limit:
+            if (data.get('data') or {}).get('is_last', True):
                 break
             last_id = (data.get('data') or {}).get('last_id', '')
         except Exception as e:
             print('HoYoLAB error: ' + str(e))
             break
-    # Sort by likes descending to ensure hottest first
     posts.sort(key=lambda x: x['score'], reverse=True)
     print('HoYoLAB list length: ' + str(len(posts[:limit])))
     return posts[:limit]
@@ -114,43 +93,31 @@ def fetch_hoyolab(limit=20):
 def fetch_youtube(limit=20):
     posts = []
     try:
-        # Fetch more than needed, then sort by view count to get hottest
         fetch_count = limit * 3
         result = subprocess.run(
-            [
-                sys.executable, '-m', 'yt_dlp',
-                '--dump-json', '--flat-playlist', '--no-download',
-                '--playlist-end', str(fetch_count),
-                '--default-search', 'ytsearch' + str(fetch_count),
-                'genshin impact',
-            ],
-            capture_output=True, text=True, timeout=120
-        )
+            [sys.executable, '-m', 'yt_dlp',
+             '--dump-json', '--flat-playlist', '--no-download',
+             '--playlist-end', str(fetch_count),
+             '--default-search', 'ytsearch' + str(fetch_count),
+             'genshin impact'],
+            capture_output=True, text=True, timeout=120)
         items = []
         for line in result.stdout.strip().split('\n'):
             if not line:
                 continue
             try:
                 item = json.loads(line)
-                thumb = None
                 thumbnails = item.get('thumbnails') or []
-                if thumbnails:
-                    thumb = thumbnails[-1].get('url')
-                elif item.get('thumbnail'):
-                    thumb = item.get('thumbnail')
-                view_count = item.get('view_count') or 0
+                thumb = thumbnails[-1].get('url') if thumbnails else item.get('thumbnail')
                 items.append({
                     'title': item.get('title', '(no title)'),
                     'url': 'https://www.youtube.com/watch?v=' + item.get('id', ''),
-                    'score': view_count,
-                    'comments': 0,
+                    'score': item.get('view_count') or 0, 'comments': 0,
                     'source': item.get('channel') or item.get('uploader') or 'YouTube',
-                    'platform': 'YouTube',
-                    'thumb': thumb,
+                    'platform': 'YouTube', 'thumb': thumb,
                 })
             except Exception:
                 continue
-        # Sort by view count descending
         items.sort(key=lambda x: x['score'], reverse=True)
         posts = items[:limit]
         print('YouTube list length: ' + str(len(posts)))
@@ -159,32 +126,78 @@ def fetch_youtube(limit=20):
     return posts
 
 
-COLORS = {'Reddit': '#FF4500', 'VK': '#0077FF', 'HoYoLAB': '#1A9DD9', 'YouTube': '#FF0000'}
+def fetch_bilibili(limit=20):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://www.bilibili.com',
+    }
+    posts = []
+    try:
+        resp = requests.get(
+            'https://api.bilibili.com/x/web-interface/search/type',
+            params={'search_type': 'video', 'keyword': '原神', 'order': 'click',
+                    'page': 1, 'page_size': limit},
+            headers=headers, timeout=15)
+        data = resp.json()
+        print('Bilibili code: ' + str(data.get('code')))
+        results = (data.get('data') or {}).get('result') or []
+        print('Bilibili list length: ' + str(len(results)))
+        for item in results:
+            # Strip HTML tags from title
+            title = re.sub(r'<[^>]+>', '', item.get('title', '(no title)'))
+            bvid = item.get('bvid', '')
+            aid = item.get('aid', '')
+            url = ('https://www.bilibili.com/video/' + bvid) if bvid else ('https://www.bilibili.com/video/av' + str(aid))
+            thumb = item.get('pic', '')
+            if thumb and thumb.startswith('//'):
+                thumb = 'https:' + thumb
+            play = item.get('play', 0)
+            if isinstance(play, str):
+                play = int(play.replace(',', '')) if play.replace(',', '').isdigit() else 0
+            posts.append({
+                'title': title,
+                'url': url,
+                'score': play,
+                'comments': item.get('review', 0),
+                'source': item.get('author', 'Bilibili'),
+                'platform': 'Bilibili',
+                'thumb': thumb,
+            })
+    except Exception as e:
+        print('Bilibili error: ' + str(e))
+    posts.sort(key=lambda x: x['score'], reverse=True)
+    return posts[:limit]
+
+
+COLORS = {'Reddit': '#FF4500', 'HoYoLAB': '#1A9DD9', 'YouTube': '#FF0000', 'Bilibili': '#00A1D6'}
+
+
+def fmt_score(p):
+    score = p['score']
+    platform = p['platform']
+    if platform in ('YouTube', 'Bilibili') and score:
+        if score >= 1000000:
+            return str(round(score / 1000000, 1)) + 'M'
+        elif score >= 1000:
+            return str(round(score / 1000, 1)) + 'K'
+        return str(score)
+    return str(score) if score else '-'
 
 
 def card(p):
     c = COLORS.get(p['platform'], '#888')
     img = '<img src="' + p['thumb'] + '" alt="" loading="lazy">' if p.get('thumb') else ''
     title = p['title'].replace('<', '&lt;').replace('>', '&gt;')
-    score = p['score']
-    if p['platform'] == 'YouTube' and score:
-        if score >= 1000000:
-            score_str = str(round(score / 1000000, 1)) + 'M views'
-        elif score >= 1000:
-            score_str = str(round(score / 1000, 1)) + 'K views'
-        else:
-            score_str = str(score) + ' views'
-    else:
-        score_str = str(score) if score else '-'
-    comments_str = str(p['comments']) if p['comments'] else '-'
+    icon = '▶️ ' if p['platform'] in ('YouTube', 'Bilibili') else '👍 '
+    meta = '<span>' + icon + fmt_score(p) + '</span>'
+    if p['platform'] not in ('YouTube', 'Bilibili') and p['comments']:
+        meta += '<span>💬 ' + str(p['comments']) + '</span>'
     return (
         '<a class="card" href="' + p['url'] + '" target="_blank">' +
         img + '<div class="card-body">' +
         '<span class="badge" style="background:' + c + '">' + p['platform'] + ' &middot; ' + p['source'] + '</span>' +
         '<p class="card-title">' + title + '</p>' +
-        '<div class="card-meta"><span>👍 ' + score_str + '</span>' +
-        ('<span>💬 ' + comments_str + '</span>' if p['platform'] != 'YouTube' else '') +
-        '</div>' +
+        '<div class="card-meta">' + meta + '</div>' +
         '</div></a>'
     )
 
@@ -196,7 +209,7 @@ def section(title, posts, icon):
     return '<section><h2>' + icon + ' ' + title + '</h2><div class="grid">' + cards + '</div></section>'
 
 
-def generate_html(reddit, hoyolab, youtube):
+def generate_html(reddit, hoyolab, youtube, bilibili):
     now = datetime.datetime.utcnow()
     week = now.strftime('%B %d, %Y')
     updated = now.strftime('%Y-%m-%d %H:%M UTC')
@@ -204,6 +217,7 @@ def generate_html(reddit, hoyolab, youtube):
         section('Reddit Highlights', reddit, '🟠'),
         section('HoYoLAB Hot Posts', hoyolab, '🌟'),
         section('YouTube Trending', youtube, '▶️'),
+        section('Bilibili 热门', bilibili, '🔵'),
     ])
     css = (
         '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }'
@@ -233,7 +247,7 @@ def generate_html(reddit, hoyolab, youtube):
         '<header><h1>🌙 Genshin Global Digest</h1>'
         '<p>Week of ' + week + ' &middot; Updated ' + updated + '</p></header>'
         '<main>' + body + '</main>'
-        '<footer>Auto-generated weekly digest &middot; Reddit &middot; HoYoLAB &middot; YouTube &middot; Personal use only</footer>'
+        '<footer>Auto-generated weekly digest &middot; Reddit &middot; HoYoLAB &middot; YouTube &middot; Bilibili &middot; Personal use only</footer>'
         '</body></html>'
     )
 
@@ -251,15 +265,18 @@ def main():
     youtube = fetch_youtube(20)
     print('  ' + str(len(youtube)) + ' videos')
 
-    html = generate_html(reddit, hoyolab, youtube)
+    print('Fetching Bilibili...')
+    bilibili = fetch_bilibili(20)
+    print('  ' + str(len(bilibili)) + ' videos')
+
+    html = generate_html(reddit, hoyolab, youtube, bilibili)
     out = Path('docs')
     out.mkdir(exist_ok=True)
     (out / 'index.html').write_text(html, encoding='utf-8')
     (out / 'data.json').write_text(
         json.dumps({
-            'reddit': reddit,
-            'hoyolab': hoyolab,
-            'youtube': youtube,
+            'reddit': reddit, 'hoyolab': hoyolab,
+            'youtube': youtube, 'bilibili': bilibili,
             'generated_at': datetime.datetime.utcnow().isoformat(),
         }, ensure_ascii=False, indent=2),
         encoding='utf-8')
