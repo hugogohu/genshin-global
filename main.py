@@ -28,7 +28,6 @@ def fetch_reddit(limit=20):
                     continue
                 title = title_el.text or ''
                 url = link_el.get('href', '')
-                # try to get thumbnail from media:thumbnail
                 thumb = None
                 thumb_el = entry.find('{' + media_ns + '}thumbnail')
                 if thumb_el is not None:
@@ -60,20 +59,21 @@ def fetch_hoyolab(limit=10):
     posts = []
     try:
         resp = requests.get(
-            'https://bbs-api-os.hoyolab.com/community/post/wapi/getForumPostList',
-            params={'forum_id': 29, 'is_good': 'false', 'is_hot': 'true',
-                    'page_size': limit, 'gids': 2},
+            'https://bbs-api-os.hoyolab.com/community/post/wapi/getNewsList',
+            params={'gids': 2, 'last_id': '', 'page_size': limit, 'type': 3},
             headers=headers, timeout=15)
         print('HoYoLAB status: ' + str(resp.status_code))
         data = resp.json()
         print('HoYoLAB retcode: ' + str(data.get('retcode')))
-        raw_list = (data.get('data') or {}).get('posts') or []
+        raw_list = (data.get('data') or {}).get('list') or []
         print('HoYoLAB list length: ' + str(len(raw_list)))
         for item in raw_list:
             post = item.get('post', {})
             stat = item.get('stat', {})
             image_list = item.get('image_list') or []
             cover = image_list[0].get('url') if image_list else None
+            if not cover and post.get('cover'):
+                cover = post.get('cover')
             posts.append({
                 'title': post.get('subject', '(no title)'),
                 'url': 'https://www.hoyolab.com/article/' + str(post.get('post_id')),
