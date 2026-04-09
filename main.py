@@ -127,27 +127,34 @@ def fetch_youtube(limit=20):
 
 
 def fetch_bilibili(limit=20):
+    import time
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Referer': 'https://www.bilibili.com',
         'Cookie': 'buvid3=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee12345infoc',
     }
     posts = []
+    two_weeks_ago = int(time.time()) - 14 * 24 * 3600
     try:
-        import time
-        two_weeks_ago = int(time.time()) - 14 * 24 * 3600
-        resp = requests.get(
-            'https://api.bilibili.com/x/web-interface/search/type',
-            params={'search_type': 'video', 'keyword': '原神', 'order': 'click',
-                    'page': 1, 'page_size': limit,
-                    'pubtime_begin_s': two_weeks_ago},
-            headers=headers, timeout=15)
-        data = resp.json()
-        print('Bilibili code: ' + str(data.get('code')))
-        results = (data.get('data') or {}).get('result') or []
-        print('Bilibili list length: ' + str(len(results)))
-        for item in results:
-            # Strip HTML tags from title
+        all_results = []
+        for page in range(1, 5):
+            resp = requests.get(
+                'https://api.bilibili.com/x/web-interface/search/type',
+                params={'search_type': 'video', 'keyword': '原神',
+                        'order': 'pubdate', 'page': page, 'page_size': 50},
+                headers=headers, timeout=15)
+            data = resp.json()
+            if data.get('code') != 0:
+                break
+            results = (data.get('data') or {}).get('result') or []
+            if not results:
+                break
+            recent = [r for r in results if r.get('pubdate', 0) >= two_weeks_ago]
+            all_results.extend(recent)
+            if len(recent) < len(results):
+                break
+        print('Bilibili recent pool: ' + str(len(all_results)))
+        for item in all_results:
             title = re.sub(r'<[^>]+>', '', item.get('title', '(no title)'))
             bvid = item.get('bvid', '')
             aid = item.get('aid', '')
@@ -159,18 +166,21 @@ def fetch_bilibili(limit=20):
             if isinstance(play, str):
                 play = int(play.replace(',', '')) if play.replace(',', '').isdigit() else 0
             posts.append({
-                'title': title,
-                'url': url,
-                'score': play,
+                'title': title, 'url': url, 'score': play,
                 'comments': item.get('review', 0),
                 'source': item.get('author', 'Bilibili'),
-                'platform': 'Bilibili',
-                'thumb': thumb,
+                'platform': 'Bilibili', 'thumb': thumb,
             })
     except Exception as e:
         print('Bilibili error: ' + str(e))
     posts.sort(key=lambda x: x['score'], reverse=True)
-    return posts[:limit]
+    seen, deduped = set(), []
+    for p in posts:
+        if p['url'] not in seen:
+            seen.add(p['url'])
+            deduped.append(p)
+    print('Bilibili list length: ' + str(len(deduped[:limit])))
+    return deduped[:limit]
 
 
 COLORS = {'Reddit': '#FF4500', 'HoYoLAB': '#1A9DD9', 'YouTube': '#FF0000', 'Bilibili': '#00A1D6'}
