@@ -1,4 +1,4 @@
-import os, json, datetime, requests, xml.etree.ElementTree as ET
+import os, json, datetime, requests, xml.etree.ElementTree as ET, subprocess, sys
 from pathlib import Path
 
 
@@ -88,54 +88,65 @@ def fetch_hoyolab(limit=10):
     return posts
 
 
-def fetch_vk(limit=15):
-    token = os.environ.get('VK_SERVICE_TOKEN', '')
-    if not token:
-        return []
-    groups = ['genshin_impact_ru', 'genshin.impact.official']
+def fetch_youtube(limit=10):
     posts = []
-    for group in groups:
-        try:
-            resp = requests.get('https://api.vk.com/method/wall.get', params={
-                'domain': group, 'count': limit, 'access_token': token,
-                'v': '5.131', 'filter': 'owner'}, timeout=10)
-            data = resp.json()
-            if 'response' not in data:
+    try:
+        result = subprocess.run(
+            [
+                sys.executable, '-m', 'yt_dlp',
+                '--dump-json', '--flat-playlist', '--no-download',
+                '--playlist-end', str(limit),
+                '--default-search', 'ytsearch' + str(limit),
+                'genshin impact',
+            ],
+            capture_output=True, text=True, timeout=60
+        )
+        for line in result.stdout.strip().split('\n'):
+            if not line:
                 continue
-            for item in data['response']['items']:
-                text = item.get('text', '').strip()
-                if not text:
-                    continue
+            try:
+                item = json.loads(line)
                 thumb = None
-                for att in item.get('attachments', []):
-                    if att.get('type') == 'photo':
-                        sizes = att['photo'].get('sizes', [])
-                        if sizes:
-                            thumb = sizes[-1]['url']
-                        break
+                thumbnails = item.get('thumbnails') or []
+                if thumbnails:
+                    thumb = thumbnails[-1].get('url')
+                elif item.get('thumbnail'):
+                    thumb = item.get('thumbnail')
+                view_count = item.get('view_count') or 0
                 posts.append({
-                    'title': text[:200] + ('...' if len(text) > 200 else ''),
-                    'url': 'https://vk.com/wall' + str(item['owner_id']) + '_' + str(item['id']),
-                    'score': item.get('likes', {}).get('count', 0),
-                    'comments': item.get('comments', {}).get('count', 0),
-                    'source': group,
-                    'platform': 'VK',
+                    'title': item.get('title', '(no title)'),
+                    'url': 'https://www.youtube.com/watch?v=' + item.get('id', ''),
+                    'score': view_count,
+                    'comments': 0,
+                    'source': item.get('channel') or item.get('uploader') or 'YouTube',
+                    'platform': 'YouTube',
                     'thumb': thumb,
                 })
-        except Exception as e:
-            print('VK error: ' + str(e))
-    posts.sort(key=lambda x: x['score'], reverse=True)
-    return posts[:10]
+            except Exception:
+                continue
+        print('YouTube list length: ' + str(len(posts)))
+    except Exception as e:
+        print('YouTube error: ' + str(e))
+    return posts
 
 
-COLORS = {'Reddit': '#FF4500', 'VK': '#0077FF', 'HoYoLAB': '#1A9DD9'}
+COLORS = {'Reddit': '#FF4500', 'VK': '#0077FF', 'HoYoLAB': '#1A9DD9', 'YouTube': '#FF0000'}
 
 
 def card(p):
     c = COLORS.get(p['platform'], '#888')
     img = '<img src="' + p['thumb'] + '" alt="" loading="lazy">' if p.get('thumb') else ''
     title = p['title'].replace('<', '&lt;').replace('>', '&gt;')
-    score_str = str(p['score']) if p['score'] else '-'
+    score = p['score']
+    if p['platform'] == 'YouTube' and score:
+        if score >= 1000000:
+            score_str = str(round(score / 1000000, 1)) + 'M views'
+        elif score >= 1000:
+            score_str = str(round(score / 1000, 1)) + 'K views'
+        else:
+            score_str = str(score) + ' views'
+    else:
+        score_str = str(score) if score else '-'
     comments_str = str(p['comments']) if p['comments'] else '-'
     return (
         '<a class="card" href="' + p['url'] + '" target="_blank">' +
@@ -143,7 +154,8 @@ def card(p):
         '<span class="badge" style="background:' + c + '">' + p['platform'] + ' &middot; ' + p['source'] + '</span>' +
         '<p class="card-title">' + title + '</p>' +
         '<div class="card-meta"><span>👍 ' + score_str + '</span>' +
-        '<span>💬 ' + comments_str + '</span></div>' +
+        ('<span>💬 ' + comments_str + '</span>' if p['platform'] != 'YouTube' else '') +
+        '</div>' +
         '</div></a>'
     )
 
@@ -155,14 +167,14 @@ def section(title, posts, icon):
     return '<section><h2>' + icon + ' ' + title + '</h2><div class="grid">' + cards + '</div></section>'
 
 
-def generate_html(reddit, vk, hoyolab):
+def generate_html(reddit, hoyolab, youtube):
     now = datetime.datetime.utcnow()
     week = now.strftime('%B %d, %Y')
     updated = now.strftime('%Y-%m-%d %H:%M UTC')
     body = '\n'.join([
         section('Reddit Highlights', reddit, '🟠'),
         section('HoYoLAB Hot Posts', hoyolab, '🌟'),
-        section('VK Community (Russia)', vk, '🔵'),
+        section('YouTube Trending', youtube, '▶️'),
     ])
     css = (
         '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }'
@@ -192,7 +204,7 @@ def generate_html(reddit, vk, hoyolab):
         '<header><h1>🌙 Genshin Global Digest</h1>'
         '<p>Week of ' + week + ' &middot; Updated ' + updated + '</p></header>'
         '<main>' + body + '</main>'
-        '<footer>Auto-generated weekly digest &middot; Reddit &middot; HoYoLAB &middot; VK &middot; Personal use only</footer>'
+        '<footer>Auto-generated weekly digest &middot; Reddit &middot; HoYoLAB &middot; YouTube &middot; Personal use only</footer>'
         '</body></html>'
     )
 
@@ -206,19 +218,19 @@ def main():
     hoyolab = fetch_hoyolab()
     print('  ' + str(len(hoyolab)) + ' posts')
 
-    print('Fetching VK...')
-    vk = fetch_vk()
-    print('  ' + str(len(vk)) + ' posts')
+    print('Fetching YouTube...')
+    youtube = fetch_youtube()
+    print('  ' + str(len(youtube)) + ' videos')
 
-    html = generate_html(reddit, vk, hoyolab)
+    html = generate_html(reddit, hoyolab, youtube)
     out = Path('docs')
     out.mkdir(exist_ok=True)
     (out / 'index.html').write_text(html, encoding='utf-8')
     (out / 'data.json').write_text(
         json.dumps({
             'reddit': reddit,
-            'vk': vk,
             'hoyolab': hoyolab,
+            'youtube': youtube,
             'generated_at': datetime.datetime.utcnow().isoformat(),
         }, ensure_ascii=False, indent=2),
         encoding='utf-8')
