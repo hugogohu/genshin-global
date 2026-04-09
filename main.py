@@ -130,6 +130,7 @@ def fetch_bilibili(limit=20):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Referer': 'https://www.bilibili.com',
+        'Cookie': 'buvid3=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee12345infoc',
     }
     posts = []
     try:
