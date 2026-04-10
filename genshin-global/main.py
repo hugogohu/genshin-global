@@ -89,32 +89,29 @@ def fetch_hoyolab(limit=10):
 
 
 def fetch_youtube(limit=10):
-    # YouTube search: this month + sort by view count, then filter to last 14 days in Python
+    # Fetch full metadata (no --flat-playlist) so upload_date is available,
+    # use --dateafter to let yt-dlp natively filter out old videos.
     cutoff = (datetime.datetime.utcnow() - datetime.timedelta(days=14)).strftime('%Y%m%d')
-    # sp=CAMSBAgFEAE%3D → sort by view count + this month upload date filter
-    search_url = 'https://www.youtube.com/results?search_query=genshin+impact&sp=CAMSBAgFEAE%3D'
     try:
         result = subprocess.run(
-            ['yt-dlp', '--flat-playlist', '--dump-json', '--no-warnings',
-             '--playlist-end', '50', search_url],
-            capture_output=True, text=True, timeout=60)
+            ['yt-dlp', '--dump-json', '--no-warnings',
+             '--dateafter', cutoff,
+             '--playlist-end', '20',
+             'ytsearch20:genshin impact'],
+            capture_output=True, text=True, timeout=120)
         videos = []
         for line in result.stdout.splitlines():
             if not line.strip():
                 continue
             try:
                 v = json.loads(line)
-                upload_date = v.get('upload_date', '')
-                if upload_date and upload_date < cutoff:
-                    continue  # skip videos older than 14 days
-                view_count = v.get('view_count') or 0
+                vid_id = v.get('id', '')
                 thumb = v.get('thumbnail') or (
-                    'https://i.ytimg.com/vi/' + v.get('id', '') + '/hqdefault.jpg'
-                    if v.get('id') else None)
+                    'https://i.ytimg.com/vi/' + vid_id + '/hqdefault.jpg' if vid_id else None)
                 videos.append({
                     'title': v.get('title', '(no title)'),
-                    'url': 'https://www.youtube.com/watch?v=' + v.get('id', ''),
-                    'score': view_count,
+                    'url': 'https://www.youtube.com/watch?v=' + vid_id,
+                    'score': v.get('view_count') or 0,
                     'comments': 0,
                     'source': v.get('channel', 'YouTube'),
                     'platform': 'YouTube',
