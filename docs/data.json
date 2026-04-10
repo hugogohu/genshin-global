@@ -100,15 +100,6 @@
       "thumb": "https://preview.redd.it/t212gapxn4ug1.jpeg?width=640&crop=smart&auto=webp&s=c015eb54693313bf7e3a6963e1382410263cf26c"
     },
     {
-      "title": "As a German it is so funny to see the names of the quest NPCs",
-      "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sh2u5z/as_a_german_it_is_so_funny_to_see_the_names_of/",
-      "score": 0,
-      "comments": 0,
-      "source": "r/Genshin_Impact",
-      "platform": "Reddit",
-      "thumb": null
-    },
-    {
       "title": "This is easily the best area in the whole game.",
       "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sh5c8a/this_is_easily_the_best_area_in_the_whole_game/",
       "score": 0,
@@ -116,6 +107,15 @@
       "source": "r/Genshin_Impact",
       "platform": "Reddit",
       "thumb": "https://preview.redd.it/o4aogocix8ug1.jpg?width=140&height=64&auto=webp&s=495a97b153b2ab2ef367b67b2f9379eaea1b08e5"
+    },
+    {
+      "title": "As a German it is so funny to see the names of the quest NPCs",
+      "url": "https://www.reddit.com/r/Genshin_Impact/comments/1sh2u5z/as_a_german_it_is_so_funny_to_see_the_names_of/",
+      "score": 0,
+      "comments": 0,
+      "source": "r/Genshin_Impact",
+      "platform": "Reddit",
+      "thumb": null
     },
     {
       "title": "It's ok Lumine",
@@ -194,7 +194,7 @@
     {
       "title": "\"Augured Homecoming\" Version \"Luna VI\" Events Preview - Phase I",
       "url": "https://www.hoyolab.com/article/44512716",
-      "score": 5227,
+      "score": 5228,
       "comments": 1592,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -203,7 +203,7 @@
     {
       "title": "The wind of Mondstadt brings new stories. Head to Dornman Port and see what's going on!",
       "url": "https://www.hoyolab.com/article/44475418",
-      "score": 3891,
+      "score": 3892,
       "comments": 425,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -221,7 +221,7 @@
     {
       "title": "Character Trailer - \"Linnea: Precise Answers, Curious Wonders!\" | Genshin Impact",
       "url": "https://www.hoyolab.com/article/44526608",
-      "score": 3083,
+      "score": 3084,
       "comments": 278,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -275,7 +275,7 @@
     {
       "title": "Version \"Luna VI\" Event Wishes Notice - Phase I",
       "url": "https://www.hoyolab.com/article/44512635",
-      "score": 2231,
+      "score": 2232,
       "comments": 399,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -293,7 +293,7 @@
     {
       "title": "Chasca: Side Notes",
       "url": "https://www.hoyolab.com/article/44531219",
-      "score": 2105,
+      "score": 2106,
       "comments": 126,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -302,7 +302,7 @@
     {
       "title": "\"Surveying & Mapping Studies\" Event: A Fun Surveying Challenge",
       "url": "https://www.hoyolab.com/article/44541722",
-      "score": 1863,
+      "score": 1866,
       "comments": 85,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -311,7 +311,7 @@
     {
       "title": "A corridor leading to the sky has revealed itself...",
       "url": "https://www.hoyolab.com/article/44540970",
-      "score": 1764,
+      "score": 1766,
       "comments": 64,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -320,7 +320,7 @@
     {
       "title": "\"The Stilled Interstice of a Thousand Winds\" Event: Complete Exploration Missions Within the Specified Duration to Obtain an Additional Primogems ×400",
       "url": "https://www.hoyolab.com/article/44512633",
-      "score": 1635,
+      "score": 1636,
       "comments": 57,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -329,7 +329,7 @@
     {
       "title": "\"Alcyon Chapter\" Event: Complete the Story Quest Within the Specified Duration to Obtain Additional Primogems, Character Ascension Materials, and Other Rewards",
       "url": "https://www.hoyolab.com/article/44512632",
-      "score": 1534,
+      "score": 1535,
       "comments": 35,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -338,7 +338,7 @@
     {
       "title": "Participate in \"Raiment Collection: Clear Radiance\" to obtain the \"Timeless Echo\" Manekin Cosmetics Set of your choice",
       "url": "https://www.hoyolab.com/article/44529674",
-      "score": 1321,
+      "score": 1323,
       "comments": 43,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -347,7 +347,7 @@
     {
       "title": "\"Wonderland Treasures: Scales Aflame\" – New Manekin Cosmetics Now Available",
       "url": "https://www.hoyolab.com/article/44528765",
-      "score": 1317,
+      "score": 1319,
       "comments": 51,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -356,7 +356,7 @@
     {
       "title": "\"Genius Invokation TCG\" The Forge Realm's Temper: Game of Wits",
       "url": "https://www.hoyolab.com/article/44512634",
-      "score": 1197,
+      "score": 1198,
       "comments": 21,
       "source": "HoYoLAB",
       "platform": "HoYoLAB",
@@ -367,29 +367,11 @@
     {
       "title": "I Played Genshin Impact",
       "url": "https://www.youtube.com/watch?v=WtmXcwweSDo",
-      "score": 20146579,
+      "score": 20146649,
       "comments": 0,
       "source": "MSA",
       "platform": "YouTube",
       "thumb": "https://i.ytimg.com/vi/WtmXcwweSDo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBE6YSWNla1YJ9A00WVpS9gCdHDXA"
-    },
-    {
-      "title": "Producing the Sounds of Liyue | Genshin Impact: Behind the Scenes",
-      "url": "https://www.youtube.com/watch?v=pFrKZxStL_U",
-      "score": 14344416,
-      "comments": 0,
-      "source": "Genshin Impact",
-      "platform": "YouTube",
-      "thumb": "https://i.ytimg.com/vi/pFrKZxStL_U/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDvHMaPfjFmxfet116SIo16bU4ssQ"
-    },
-    {
-      "title": "Nod-Krai Main Theme Live Performance | Genshin Impact #GenshinImpact #NodKrai",
-      "url": "https://www.youtube.com/watch?v=RuXa_yxZMGI",
-      "score": 11375923,
-      "comments": 0,
-      "source": "Genshin Impact",
-      "platform": "YouTube",
-      "thumb": "https://i.ytimg.com/vi/RuXa_yxZMGI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEzPdWpu3Mpb9cTQCCmIMJMliL8A"
     },
     {
       "title": "I caved and tried Genshin Impact...",
@@ -401,33 +383,6 @@
       "thumb": "https://i.ytimg.com/vi/DZCbyzoNi3E/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBi7PV7WotAIXcAaaJkwIbIYJzFnQ"
     },
     {
-      "title": "Fontaine Live Symphony Performance | Genshin Impact",
-      "url": "https://www.youtube.com/watch?v=qZ9DaB7xRZs",
-      "score": 7226794,
-      "comments": 0,
-      "source": "Genshin Impact",
-      "platform": "YouTube",
-      "thumb": "https://i.ytimg.com/vi/qZ9DaB7xRZs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLByFNo9tRjpcvQcM-IqJ6Uf_aGVyQ"
-    },
-    {
-      "title": "Natlan Live Symphony Performance | Genshin Impact #Live #Natlan #GenshinImpact",
-      "url": "https://www.youtube.com/watch?v=TyCB25oXUA4",
-      "score": 6866798,
-      "comments": 0,
-      "source": "Genshin Impact",
-      "platform": "YouTube",
-      "thumb": "https://i.ytimg.com/vi/TyCB25oXUA4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAIvgv5WlD4xIfRPmJeXXmaD6p0Dw"
-    },
-    {
-      "title": "Storyline EP \"La vaguelette\" MV | Genshin Impact",
-      "url": "https://www.youtube.com/watch?v=jHjUHKdoaqI",
-      "score": 6563669,
-      "comments": 0,
-      "source": "Genshin Impact",
-      "platform": "YouTube",
-      "thumb": "https://i.ytimg.com/vi/jHjUHKdoaqI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBML18DesFN4aYgd0cMpGZM1GLZEQ"
-    },
-    {
       "title": "\"Genshin Impact Orchestral Concert 2023\" Official Shanghai Performance Recording",
       "url": "https://www.youtube.com/watch?v=RgcOQo-Ty_I",
       "score": 4239014,
@@ -437,9 +392,36 @@
       "thumb": "https://i.ytimg.com/vi/RgcOQo-Ty_I/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCcj869q_ACNuy7U21Bd5Xl-ivDtg"
     },
     {
+      "title": "Can You Beat Genshin Impact From the Start...in a Day?",
+      "url": "https://www.youtube.com/watch?v=9YU3W0b2oLE",
+      "score": 3795022,
+      "comments": 0,
+      "source": "itspaikon",
+      "platform": "YouTube",
+      "thumb": "https://i.ytimg.com/vi/9YU3W0b2oLE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCkLBahkqAIz0x12KZoOLfLa6L6DQ"
+    },
+    {
+      "title": "I Played 100 Days of Genshin Impact",
+      "url": "https://www.youtube.com/watch?v=qeSQxyF9APk",
+      "score": 2288371,
+      "comments": 0,
+      "source": "Chiken",
+      "platform": "YouTube",
+      "thumb": "https://i.ytimg.com/vi/qeSQxyF9APk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDxv1o0K5kmja-Zxt1WU0YSkMSXjA"
+    },
+    {
+      "title": "1+ Hour of Relaxing Genshin Impact Music | OST All Regions Mix",
+      "url": "https://www.youtube.com/watch?v=MLesvVMUEbs",
+      "score": 2263403,
+      "comments": 0,
+      "source": "Tintilinic1912",
+      "platform": "YouTube",
+      "thumb": "https://i.ytimg.com/vi/MLesvVMUEbs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBHXpi5YXVRYilf-3AP1XnqNO2GWA"
+    },
+    {
       "title": "I STARTED OVER In Genshin Impact...Here's What Happened",
       "url": "https://www.youtube.com/watch?v=oPZbXLbvbtY",
-      "score": 1483845,
+      "score": 1483846,
       "comments": 0,
       "source": "Doro44",
       "platform": "YouTube",
@@ -448,7 +430,7 @@
     {
       "title": "Character Trailer - \"Varka: The Code of Chivalry\" | Genshin Impact #GenshinImpact #Varka",
       "url": "https://www.youtube.com/watch?v=_Q-i5CA0ogM",
-      "score": 1483679,
+      "score": 1483693,
       "comments": 0,
       "source": "Genshin Impact",
       "platform": "YouTube",
@@ -457,11 +439,20 @@
     {
       "title": "Genshin Impact Version \"Luna III\" Special Program #GenshinImpact #SpecialProgram #GenshinLunaIII",
       "url": "https://www.youtube.com/watch?v=LxT7S7TDd-s",
-      "score": 1313617,
+      "score": 1313615,
       "comments": 0,
       "source": "Genshin Impact",
       "platform": "YouTube",
       "thumb": "https://i.ytimg.com/vi/LxT7S7TDd-s/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBFFUXSVPi_0CM0g6gKLLWq9grZ3w"
+    },
+    {
+      "title": "Genshin Impact explained by an idiot",
+      "url": "https://www.youtube.com/watch?v=3WFde7vxoic",
+      "score": 1191917,
+      "comments": 0,
+      "source": "Ice Cream Sandwich",
+      "platform": "YouTube",
+      "thumb": "https://i.ytimg.com/vi/3WFde7vxoic/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCafath2XFME_zNjxOOAFuErBkmuw"
     },
     {
       "title": "Genshin Impact Version \"Luna V\" Special Program #GenshinImpact #SpecialProgram",
@@ -475,7 +466,7 @@
     {
       "title": "\"Another Prologue\" Animated Short | Genshin Impact #GenshinImpact #VarkaTheLegend #Varka",
       "url": "https://www.youtube.com/watch?v=4s7G9I4SGZc",
-      "score": 1036157,
+      "score": 1036166,
       "comments": 0,
       "source": "Genshin Impact",
       "platform": "YouTube",
@@ -484,7 +475,7 @@
     {
       "title": "Genshin Impact Version \"Luna VI\" Special Program #GenshinImpact #SpecialProgram",
       "url": "https://www.youtube.com/watch?v=2d3XcT79HjA",
-      "score": 955104,
+      "score": 955115,
       "comments": 0,
       "source": "Genshin Impact",
       "platform": "YouTube",
@@ -500,18 +491,9 @@
       "thumb": "https://i.ytimg.com/vi/aRAA3irU_ZI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAS7NdJ3M4QiwII60rpM0rR7MZQHQ"
     },
     {
-      "title": "Character Teaser - \"Zibai: As Drifting Wayside Dust\" | Genshin Impact #GenshinImpact #Zibai",
-      "url": "https://www.youtube.com/watch?v=uFKQL6xPbRU",
-      "score": 553797,
-      "comments": 0,
-      "source": "Genshin Impact",
-      "platform": "YouTube",
-      "thumb": "https://i.ytimg.com/vi/uFKQL6xPbRU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDyTtNOAkkbMV4nZXosy4h5QOdfWA"
-    },
-    {
       "title": "Day 1 Of Fixing The WORST Genshin Impact Account",
       "url": "https://www.youtube.com/watch?v=Tvdzfmc-M78",
-      "score": 523405,
+      "score": 523411,
       "comments": 0,
       "source": "Doro44",
       "platform": "YouTube",
@@ -520,7 +502,7 @@
     {
       "title": "Character Teaser — \"Linnea: Companion on a Rainy Night\" | Genshin Impact #GenshinImpact #Linnea",
       "url": "https://www.youtube.com/watch?v=6YiuyqftA8U",
-      "score": 427177,
+      "score": 427199,
       "comments": 0,
       "source": "Genshin Impact",
       "platform": "YouTube",
@@ -529,7 +511,7 @@
     {
       "title": "Character Trailer - \"Linnea: Precise Answers, Curious Wonders!\" | Genshin Impact #Linnea",
       "url": "https://www.youtube.com/watch?v=G3VvCIa-jB0",
-      "score": 373834,
+      "score": 373926,
       "comments": 0,
       "source": "Genshin Impact",
       "platform": "YouTube",
@@ -543,8 +525,26 @@
       "source": "Doro44",
       "platform": "YouTube",
       "thumb": "https://i.ytimg.com/vi/8nrG66-1IHc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAzfJq3FIEcSqbunSQs-jkXfdnYUg"
+    },
+    {
+      "title": "Genshin Impact Is The Best Game I Can't Recommend",
+      "url": "https://www.youtube.com/watch?v=Pr5j63fWbkw",
+      "score": 347377,
+      "comments": 0,
+      "source": "Pogwil",
+      "platform": "YouTube",
+      "thumb": "https://i.ytimg.com/vi/Pr5j63fWbkw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB2cn9kmQA6B0IdvqquvYP47v438A"
+    },
+    {
+      "title": "Version \"Luna VI\" \"Augured Homecoming\" Trailer | Genshin Impact #GenshinImpact #Linnea",
+      "url": "https://www.youtube.com/watch?v=mVWLSzkpGzA",
+      "score": 292070,
+      "comments": 0,
+      "source": "Genshin Impact",
+      "platform": "YouTube",
+      "thumb": "https://i.ytimg.com/vi/mVWLSzkpGzA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD4bbU_IUjGJlW2VedwTGwiWdjX_A"
     }
   ],
   "bilibili": [],
-  "generated_at": "2026-04-10T03:19:37.044858"
+  "generated_at": "2026-04-10T03:28:20.967885"
 }
