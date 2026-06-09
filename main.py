@@ -136,6 +136,7 @@ def fetch_bilibili(limit=20):
     two_weeks_ago = int(time.time()) - 14 * 24 * 3600
     genshin_keywords = ('原神', 'genshin', 'Genshin')
     all_results = []
+    posts = []
     try:
         # Fetch top videos by play count across multiple pages, filter to recent + genshin only
         for page in range(1, 5):
@@ -153,7 +154,7 @@ def fetch_bilibili(limit=20):
             all_results.extend(results)
         print('Bilibili total pool: ' + str(len(all_results)))
 
-        posts = []
+        
         for item in all_results:
             raw_title = item.get('title', '')
             title = re.sub(r'<[^>]+>', '', raw_title)
