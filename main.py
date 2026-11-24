@@ -1,48 +1,94 @@
-import os, json, datetime, requests, xml.etree.ElementTree as ET, subprocess, sys, re
+import os, json, datetime, requests, subprocess, sys, re
 from pathlib import Path
 
 
+class RedditFetchError(RuntimeError):
+    """Raised when Reddit data cannot be fetched safely."""
+
+
+def reddit_access_token():
+    """Get a short-lived OAuth token without ever writing credentials to disk."""
+    client_id = os.environ.get('REDDIT_CLIENT_ID', '')
+    client_secret = os.environ.get('REDDIT_CLIENT_SECRET', '')
+    username = os.environ.get('REDDIT_USERNAME', '')
+    password = os.environ.get('REDDIT_PASSWORD', '')
+    if not client_id or not client_secret:
+        raise RedditFetchError(
+            'Missing REDDIT_CLIENT_ID or REDDIT_CLIENT_SECRET. '
+            'Configure repository Actions secrets before running the digest.')
+
+    if not username or not password:
+        raise RedditFetchError(
+            'Missing REDDIT_USERNAME or REDDIT_PASSWORD. '
+            'Use a Reddit script app and configure all four Reddit secrets.')
+    payload = {'grant_type': 'password', 'username': username, 'password': password}
+    try:
+        response = requests.post(
+            'https://www.reddit.com/api/v1/access_token', auth=(client_id, client_secret),
+            data=payload,
+            headers={'User-Agent': 'genshin-global/1.0 by u/hugogohu'}, timeout=20)
+        response.raise_for_status()
+        token = response.json().get('access_token')
+    except (requests.RequestException, ValueError) as e:
+        raise RedditFetchError('OAuth token request failed: ' + str(e)) from e
+    if not token:
+        raise RedditFetchError('OAuth token response did not include an access token.')
+    return token
+
+
+def reddit_thumbnail(data):
+    preview = data.get('preview') or {}
+    images = preview.get('images') or []
+    if images:
+        source = images[0].get('source') or {}
+        if source.get('url'):
+            return source['url'].replace('&amp;', '&')
+    thumbnail = data.get('thumbnail')
+    return thumbnail if thumbnail and thumbnail.startswith(('http://', 'https://')) else None
+
+
 def fetch_reddit(limit=20):
+    """Fetch hot posts through Reddit's official OAuth API, not anonymous RSS."""
     subreddits = ['Genshin_Impact', 'GenshinImpactTips', 'Genshin_Lore']
+    token = reddit_access_token()
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/rss+xml, application/xml, text/xml',
+        'Authorization': 'Bearer ' + token,
+        'User-Agent': 'genshin-global/1.0 by u/hugogohu',
+        'Accept': 'application/json',
     }
     posts = []
-    ns = 'http://www.w3.org/2005/Atom'
-    media_ns = 'http://search.yahoo.com/mrss/'
     per_sub = max(limit, 25)
     for sub in subreddits:
         try:
-            resp = requests.get(
-                'https://www.reddit.com/r/' + sub + '/hot.rss?limit=' + str(per_sub),
-                headers=headers, timeout=15)
-            if resp.status_code != 200:
+            response = requests.get(
+                'https://oauth.reddit.com/r/' + sub + '/hot',
+                params={'limit': per_sub, 'raw_json': 1}, headers=headers, timeout=20)
+            response.raise_for_status()
+            children = ((response.json().get('data') or {}).get('children') or [])
+        except (requests.RequestException, ValueError) as e:
+            raise RedditFetchError('Reddit API request failed for r/' + sub + ': ' + str(e)) from e
+        for child in children:
+            data = child.get('data') or {}
+            permalink = data.get('permalink', '')
+            if not permalink:
                 continue
-            root = ET.fromstring(resp.content)
-            entries = root.findall('{' + ns + '}entry')
-            for entry in entries:
-                title_el = entry.find('{' + ns + '}title')
-                link_el = entry.find('{' + ns + '}link')
-                if title_el is None or link_el is None:
-                    continue
-                thumb = None
-                thumb_el = entry.find('{' + media_ns + '}thumbnail')
-                if thumb_el is not None:
-                    thumb = thumb_el.get('url')
-                posts.append({
-                    'title': title_el.text or '',
-                    'url': link_el.get('href', ''),
-                    'score': 0, 'comments': 0,
-                    'source': 'r/' + sub, 'platform': 'Reddit', 'thumb': thumb,
-                })
-        except Exception as e:
-            print('Reddit error (' + sub + '): ' + str(e))
+            posts.append({
+                'title': data.get('title', '(no title)'),
+                'url': 'https://www.reddit.com' + permalink,
+                'score': data.get('score', 0), 'comments': data.get('num_comments', 0),
+                'source': 'r/' + sub, 'platform': 'Reddit',
+                'thumb': reddit_thumbnail(data),
+            })
+
     seen, deduped = set(), []
-    for p in posts:
-        if p['url'] not in seen:
-            seen.add(p['url'])
-            deduped.append(p)
+    for post in posts:
+        if post['url'] not in seen:
+            seen.add(post['url'])
+            deduped.append(post)
+    if not deduped:
+        raise RedditFetchError('Reddit API returned no posts; refusing to replace existing digest data.')
+    deduped.sort(key=lambda post: post['score'], reverse=True)
+    print('Reddit list length: ' + str(len(deduped[:limit])))
     return deduped[:limit]
 
 
@@ -277,7 +323,13 @@ def generate_html(reddit, hoyolab, youtube, bilibili):
 
 def main():
     print('Fetching Reddit...')
-    reddit = fetch_reddit(20)
+    try:
+        reddit = fetch_reddit(20)
+    except RedditFetchError as e:
+        # Do not write docs/data.json on failure: GitHub Pages keeps the last
+        # known-good Reddit digest instead of publishing an empty section.
+        print('Reddit fetch failed: ' + str(e), file=sys.stderr)
+        raise SystemExit(1)
     print('  ' + str(len(reddit)) + ' posts')
 
     print('Fetching HoYoLAB...')
