@@ -64,15 +64,26 @@ def fetch_reddit(limit=20):
 
 
 def previous_reddit_posts():
-    """Return Reddit posts from the preceding committed digest, if available."""
+    """Return the most recent non-empty Reddit posts from git history.
+
+    A failed weekly run may already have committed an empty Reddit list, so this
+    searches older digest revisions instead of only looking at HEAD^.
+    """
     try:
-        result = subprocess.run(
-            ['git', 'show', 'HEAD^:docs/data.json'], capture_output=True,
-            text=True, check=True, timeout=15)
-        posts = (json.loads(result.stdout).get('reddit') or [])
-        return posts if isinstance(posts, list) else []
+        revisions = subprocess.run(
+            ['git', 'log', '--format=%H', '--', 'docs/data.json'],
+            capture_output=True, text=True, check=True, timeout=15).stdout.splitlines()
+        for revision in revisions:
+            result = subprocess.run(
+                ['git', 'show', revision + ':docs/data.json'], capture_output=True,
+                text=True, check=True, timeout=15)
+            posts = (json.loads(result.stdout).get('reddit') or [])
+            if isinstance(posts, list) and posts:
+                print('Using Reddit backup from ' + revision[:7] + '.', file=sys.stderr)
+                return posts
     except (subprocess.SubprocessError, json.JSONDecodeError):
-        return []
+        pass
+    return []
 
 
 def fetch_hoyolab(limit=20):
