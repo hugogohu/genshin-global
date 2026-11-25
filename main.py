@@ -1,83 +1,57 @@
-import os, json, datetime, requests, subprocess, sys, re
+import json, datetime, requests, subprocess, sys, re, time
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
-class RedditFetchError(RuntimeError):
-    """Raised when Reddit data cannot be fetched safely."""
-
-
-def reddit_access_token():
-    """Get a short-lived OAuth token without ever writing credentials to disk."""
-    client_id = os.environ.get('REDDIT_CLIENT_ID', '')
-    client_secret = os.environ.get('REDDIT_CLIENT_SECRET', '')
-    username = os.environ.get('REDDIT_USERNAME', '')
-    password = os.environ.get('REDDIT_PASSWORD', '')
-    if not client_id or not client_secret:
-        raise RedditFetchError(
-            'Missing REDDIT_CLIENT_ID or REDDIT_CLIENT_SECRET. '
-            'Configure repository Actions secrets before running the digest.')
-
-    if not username or not password:
-        raise RedditFetchError(
-            'Missing REDDIT_USERNAME or REDDIT_PASSWORD. '
-            'Use a Reddit script app and configure all four Reddit secrets.')
-    payload = {'grant_type': 'password', 'username': username, 'password': password}
-    try:
-        response = requests.post(
-            'https://www.reddit.com/api/v1/access_token', auth=(client_id, client_secret),
-            data=payload,
-            headers={'User-Agent': 'genshin-global/1.0 by u/hugogohu'}, timeout=20)
-        response.raise_for_status()
-        token = response.json().get('access_token')
-    except (requests.RequestException, ValueError) as e:
-        raise RedditFetchError('OAuth token request failed: ' + str(e)) from e
-    if not token:
-        raise RedditFetchError('OAuth token response did not include an access token.')
-    return token
-
-
-def reddit_thumbnail(data):
-    preview = data.get('preview') or {}
-    images = preview.get('images') or []
-    if images:
-        source = images[0].get('source') or {}
-        if source.get('url'):
-            return source['url'].replace('&amp;', '&')
-    thumbnail = data.get('thumbnail')
-    return thumbnail if thumbnail and thumbnail.startswith(('http://', 'https://')) else None
-
-
 def fetch_reddit(limit=20):
-    """Fetch hot posts through Reddit's official OAuth API, not anonymous RSS."""
+    """Fetch public Reddit RSS without account credentials.
+
+    Reddit may temporarily rate-limit a shared GitHub Actions IP. A failure is
+    reported to the caller so the last successful Reddit section can be kept.
+    """
     subreddits = ['Genshin_Impact', 'GenshinImpactTips', 'Genshin_Lore']
-    token = reddit_access_token()
     headers = {
-        'Authorization': 'Bearer ' + token,
-        'User-Agent': 'genshin-global/1.0 by u/hugogohu',
-        'Accept': 'application/json',
+        'User-Agent': 'genshin-global-digest/1.0 (public weekly digest)',
+        'Accept': 'application/atom+xml, application/xml, text/xml',
     }
+    atom_ns = 'http://www.w3.org/2005/Atom'
+    media_ns = 'http://search.yahoo.com/mrss/'
     posts = []
-    per_sub = max(limit, 25)
+
     for sub in subreddits:
+        url = 'https://www.reddit.com/r/' + sub + '/hot.rss?limit=' + str(max(limit, 25))
+        response = None
+        for attempt in range(3):
+            try:
+                response = requests.get(url, headers=headers, timeout=20)
+                if response.status_code == 200:
+                    break
+                print('Reddit r/' + sub + ' HTTP ' + str(response.status_code) +
+                      ' (attempt ' + str(attempt + 1) + '/3)', file=sys.stderr)
+            except requests.RequestException as e:
+                print('Reddit r/' + sub + ' request error: ' + str(e), file=sys.stderr)
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+
+        if response is None or response.status_code != 200:
+            continue
         try:
-            response = requests.get(
-                'https://oauth.reddit.com/r/' + sub + '/hot',
-                params={'limit': per_sub, 'raw_json': 1}, headers=headers, timeout=20)
-            response.raise_for_status()
-            children = ((response.json().get('data') or {}).get('children') or [])
-        except (requests.RequestException, ValueError) as e:
-            raise RedditFetchError('Reddit API request failed for r/' + sub + ': ' + str(e)) from e
-        for child in children:
-            data = child.get('data') or {}
-            permalink = data.get('permalink', '')
-            if not permalink:
+            root = ET.fromstring(response.content)
+        except ET.ParseError as e:
+            print('Reddit r/' + sub + ' returned invalid RSS: ' + str(e), file=sys.stderr)
+            continue
+        for entry in root.findall('{' + atom_ns + '}entry'):
+            title = entry.findtext('{' + atom_ns + '}title') or '(no title)'
+            link = entry.find('{' + atom_ns + '}link')
+            if link is None or not link.get('href'):
                 continue
+            thumbnail = entry.find('{' + media_ns + '}thumbnail')
             posts.append({
-                'title': data.get('title', '(no title)'),
-                'url': 'https://www.reddit.com' + permalink,
-                'score': data.get('score', 0), 'comments': data.get('num_comments', 0),
+                'title': title,
+                'url': link.get('href'),
+                'score': 0, 'comments': 0,
                 'source': 'r/' + sub, 'platform': 'Reddit',
-                'thumb': reddit_thumbnail(data),
+                'thumb': thumbnail.get('url') if thumbnail is not None else None,
             })
 
     seen, deduped = set(), []
@@ -85,11 +59,20 @@ def fetch_reddit(limit=20):
         if post['url'] not in seen:
             seen.add(post['url'])
             deduped.append(post)
-    if not deduped:
-        raise RedditFetchError('Reddit API returned no posts; refusing to replace existing digest data.')
-    deduped.sort(key=lambda post: post['score'], reverse=True)
     print('Reddit list length: ' + str(len(deduped[:limit])))
     return deduped[:limit]
+
+
+def previous_reddit_posts():
+    """Return Reddit posts from the preceding committed digest, if available."""
+    try:
+        result = subprocess.run(
+            ['git', 'show', 'HEAD^:docs/data.json'], capture_output=True,
+            text=True, check=True, timeout=15)
+        posts = (json.loads(result.stdout).get('reddit') or [])
+        return posts if isinstance(posts, list) else []
+    except (subprocess.SubprocessError, json.JSONDecodeError):
+        return []
 
 
 def fetch_hoyolab(limit=20):
@@ -323,13 +306,16 @@ def generate_html(reddit, hoyolab, youtube, bilibili):
 
 def main():
     print('Fetching Reddit...')
-    try:
-        reddit = fetch_reddit(20)
-    except RedditFetchError as e:
-        # Do not write docs/data.json on failure: GitHub Pages keeps the last
-        # known-good Reddit digest instead of publishing an empty section.
-        print('Reddit fetch failed: ' + str(e), file=sys.stderr)
-        raise SystemExit(1)
+    reddit = fetch_reddit(20)
+    if not reddit:
+        reddit = previous_reddit_posts()
+        if reddit:
+            print('Reddit unavailable; keeping ' + str(len(reddit)) +
+                  ' posts from the previous digest.', file=sys.stderr)
+        else:
+            print('Reddit unavailable and no previous posts were found; '
+                  'leaving the existing published digest unchanged.', file=sys.stderr)
+            raise SystemExit(1)
     print('  ' + str(len(reddit)) + ' posts')
 
     print('Fetching HoYoLAB...')
